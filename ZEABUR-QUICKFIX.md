@@ -7,21 +7,32 @@
 
 ## Fix (5 minute)
 
-### Step 1 — Settings → Root Directory
+### Step 1 — Dockerfile override **poora khali** karo (sabse zaroori)
 
-| Field | Value |
-|-------|--------|
-| **Root Directory** | `office_suite/docs` |
+Settings → Dockerfile box:
 
-> Slash `/` mat rakho. Exactly: `office_suite/docs`
+1. `FROM node:18-alpine` **saari lines delete** karo — box **100% empty**
+2. **Save**
+3. **Load from GitHub** dabao (ab repo root par `Dockerfile` hai)
 
-### Step 2 — Dockerfile override hatao
+> Agar box mein kuch bhi likha rahega to Zeabur repo wala Dockerfile ignore kar sakta hai.
 
-1. Settings → Dockerfile wala box **poora khali** kar do (node:18 lines delete)
-2. **Save** dabao
-3. Phir **Redeploy** (Overview → Redeploy)
+### Step 2 — Root Directory (dono option chalega)
 
-Zeabur ab `office_suite/docs/Dockerfile` use karega (Python/Django backend).
+**Option A (ab default):** Root Directory = `/`  
+Repo root par `Dockerfile` + `devops.Dockerfile` add ho chuke hain.
+
+**Option B:** Root Directory = `office_suite/docs` (purana tareeka)
+
+### Step 3 — GitHub par latest code
+
+```bash
+cd "/home/bappu/bpmn_check/DEVOPS Setup"
+git pull
+git push   # agar push pending ho
+```
+
+Zeabur → service → **Redeploy** (latest commit pull hone ke baad)
 
 ### Step 3 — Port
 
