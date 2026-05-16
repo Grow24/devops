@@ -88,14 +88,8 @@ COPY --from=link-collector ${IMPRESS_STATIC_ROOT} ${IMPRESS_STATIC_ROOT}
 COPY --from=mail-builder /mail/backend/core/templates/mail /app/core/templates/mail
 
 ENV WEB_CONCURRENCY=4
-EXPOSE 8000
+# Zeabur injects $PORT — app must listen on it (not hard-coded 8000)
+ENV PORT=8080
+EXPOSE 8080
 
-CMD [\
-  "uvicorn",\
-  "--app-dir=/app",\
-  "--host=0.0.0.0",\
-  "--timeout-graceful-shutdown=300",\
-  "--limit-max-requests=20000",\
-  "--lifespan=off",\
-  "impress.asgi:application"\
-  ]
+CMD ["sh", "-c", "exec uvicorn --app-dir=/app --host=0.0.0.0 --port=${PORT:-8080} --timeout-graceful-shutdown=300 --limit-max-requests=20000 --lifespan=off impress.asgi:application"]
