@@ -34,11 +34,16 @@ git push   # agar push pending ho
 
 Zeabur → service → **Redeploy** (latest commit pull hone ke baad)
 
-### Step 3 — Port
+### RUNNING but 404 on `/`?
 
-| Field | Value |
-|-------|--------|
-| **Port** | `8000` |
+1. **Redeploy** latest commit (`uvicorn` ab `$PORT` par sunta hai)
+2. Zeabur **Networking** → port: default / `$PORT` (often `8080`) — `8000` force mat karo agar app `$PORT` use kare
+3. Ye URLs try karo (root `/` par koi page nahi hai):
+
+   - `https://YOUR-DOMAIN.zeabur.app/__heartbeat__/`
+   - `https://YOUR-DOMAIN.zeabur.app/api/v1.0/config/`
+
+4. `DJANGO_ALLOWED_HOSTS` mein domain add karo: `devopsdev.zeabur.app`
 
 ### Step 4 — Variables (kam se kam)
 
