@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  grow24_postgres:
+    image: postgres:16
+    container_name: grow24_postgres
+    restart: unless-stopped
+    env_file:
+      - ./env.d/.env
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - ./data:/var/lib/postgresql/data
+      - ./init/init-multiple-dbs.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - suite_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  suite_net:
+    external: true
+
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./data
+      o: bind

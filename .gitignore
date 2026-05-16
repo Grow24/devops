@@ -1,0 +1,40 @@
+# Secrets & local env (never commit)
+**/.env
+!**/.env.example
+**/env.d/.env
+**/env.d/.env.d
+office_suite/docs/env.d/grow24/common
+
+# TLS / keys
+keycloak/ssl/
+*.pem
+*.key
+*.crt
+!keycloak/ssl/.gitkeep
+
+# Runtime data
+database/postgres/data/
+database/redis/redis_data/
+keycloak/keycloak_data/
+office_suite/docs/data/media/
+office_suite/docs/data/static/
+office_suite/**/node_modules/
+office_suite/**/.next/
+office_suite/**/dist/
+office_suite/**/__pycache__/
+office_suite/**/.venv/
+office_suite/**/.pytest_cache/
+office_suite/**/coverage/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.log
+
+# Build artifacts
+*.pyc
+*.pyo
+.python-version

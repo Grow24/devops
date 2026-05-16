@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  grow24_redis:
+    image: redis:7
+    container_name: grow24_redis
+    restart: unless-stopped
+    env_file:
+      - ./env.d/.env
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    networks:
+      - suite_net
+    healthcheck:
+      # test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ["CMD", "redis-server", "--test-memory", "1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  suite_net:
+    external: true
+
+volumes:
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./redis/redis_data
+      o: bind

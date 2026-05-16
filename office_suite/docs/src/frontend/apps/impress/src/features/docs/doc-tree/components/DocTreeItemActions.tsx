@@ -1,0 +1,260 @@
+import {
+  Button,
+  ButtonElement,
+  useModal,
+} from '@gouvfr-lasuite/cunningham-react';
+import {
+  DropdownMenu,
+  DropdownMenuOption,
+  useArrowRoving,
+  useTreeContext,
+} from '@gouvfr-lasuite/ui-kit';
+import { useRouter } from 'next/router';
+import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
+
+import AddSVG from '@/assets/icons/ui-kit/add.svg';
+import MoreHorizSVG from '@/assets/icons/ui-kit/more_horiz.svg';
+import { Box, Icon } from '@/components';
+import {
+  Doc,
+  ModalRemoveDoc,
+  Role,
+  getEmojiAndTitle,
+  useCopyDocLink,
+  useCreateChildDoc,
+  useDocTitleUpdate,
+} from '@/docs/doc-management';
+import { useDuplicateDoc } from '@/docs/doc-management/api';
+
+import { useDetachDoc } from '../api/useDetach';
+import MoveDocIcon from '../assets/doc-extract-bold.svg';
+
+type DocTreeItemActionsProps = {
+  doc: Doc;
+  isOpen?: boolean;
+  isRoot?: boolean;
+  onCreateSuccess?: (newDoc: Doc) => void;
+  onOpenChange?: (isOpen: boolean) => void;
+  parentId?: string | null;
+  actionsRef?: React.RefObject<HTMLDivElement | null>;
+  buttonOptionRef?: React.RefObject<ButtonElement | null>;
+};
+
+export const DocTreeItemActions = ({
+  doc,
+  isOpen,
+  isRoot = false,
+  onCreateSuccess,
+  onOpenChange,
+  parentId,
+  actionsRef,
+  buttonOptionRef,
+}: DocTreeItemActionsProps) => {
+  const internalActionsRef = useRef<HTMLDivElement | null>(null);
+  const targetActionsRef = actionsRef ?? internalActionsRef;
+  const internalButtonRef = useRef<ButtonElement | null>(null);
+  const targetButtonRef = buttonOptionRef ?? internalButtonRef;
+  const router = useRouter();
+  const { t } = useTranslation();
+  const deleteModal = useModal();
+  const copyLink = useCopyDocLink(doc.id);
+  const { mutate: detachDoc } = useDetachDoc();
+  const treeContext = useTreeContext<Doc | null>();
+
+  // Keyboard navigation inside the actions toolbar (ArrowLeft / ArrowRight).
+  useArrowRoving(targetActionsRef.current);
+
+  const { mutate: duplicateDoc } = useDuplicateDoc({
+    onSuccess: (duplicatedDoc) => {
+      // Reset the tree context root will reset the full tree view.
+      treeContext?.setRoot(null);
+      void router.push(`/docs/${duplicatedDoc.id}`);
+    },
+  });
+
+  // Emoji Management
+  const { emoji } = getEmojiAndTitle(doc.title ?? '');
+  const { updateDocEmoji } = useDocTitleUpdate();
+  const removeEmoji = () => {
+    updateDocEmoji(doc.id, doc.title ?? '', '');
+  };
+
+  const handleDetachDoc = () => {
+    if (!treeContext?.root) {
+      return;
+    }
+
+    detachDoc(
+      { documentId: doc.id, rootId: treeContext.root.id },
+      {
+        onSuccess: () => {
+          if (treeContext.root) {
+            treeContext.treeData.setSelectedNode(treeContext.root);
+            void router.push(`/docs/${treeContext.root.id}`).then(() => {
+              setTimeout(() => {
+                treeContext?.treeData.deleteNode(doc.id);
+              }, 100);
+            });
+          }
+        },
+      },
+    );
+  };
+
+  const options: DropdownMenuOption[] = [
+    {
+      label: t('Copy link'),
+      icon: <Icon iconName="link" $size="24px" />,
+      callback: copyLink,
+    },
+    ...(!isRoot
+      ? [
+          ...(emoji && doc.abilities.partial_update
+            ? [
+                {
+                  label: t('Remove emoji'),
+                  icon: <Icon iconName="emoji_emotions" $size="24px" />,
+                  callback: removeEmoji,
+                },
+              ]
+            : []),
+          {
+            label: t('Move to my docs'),
+            isDisabled: doc.user_role !== Role.OWNER,
+            icon: (
+              <Box
+                $css={css`
+                  transform: scale(0.8);
+                `}
+              >
+                <MoveDocIcon />
+              </Box>
+            ),
+            callback: handleDetachDoc,
+          },
+        ]
+      : []),
+    {
+      label: t('Duplicate'),
+      icon: <Icon iconName="content_copy" />,
+      isDisabled: !doc.abilities.duplicate,
+      callback: () => {
+        duplicateDoc({
+          docId: doc.id,
+          with_accesses: false,
+          canSave: doc.abilities.partial_update,
+        });
+      },
+    },
+    {
+      label: t('Delete'),
+      isDisabled: !doc.abilities.destroy,
+      icon: <Icon iconName="delete" $size="24px" />,
+      callback: deleteModal.open,
+    },
+  ];
+
+  const { mutate: createChildDoc } = useCreateChildDoc({
+    onSuccess: (newDoc) => {
+      onCreateSuccess?.(newDoc);
+      void router.push(`/docs/${newDoc.id}`);
+    },
+  });
+
+  const onSuccessDelete = () => {
+    const isTopParent = doc.id === treeContext?.root?.id && !parentId;
+    const parentIdComputed = parentId || treeContext?.root?.id;
+
+    if (isTopParent) {
+      void router.push(`/`);
+    } else if (parentIdComputed) {
+      void router.push(`/docs/${parentIdComputed}`).then(() => {
+        setTimeout(() => {
+          treeContext?.treeData.deleteNode(doc.id);
+        }, 100);
+      });
+    }
+  };
+
+  return (
+    <Box className="doc-tree-root-item-actions actions">
+      <Box
+        ref={targetActionsRef}
+        $direction="row"
+        $align="center"
+        className="--docs--doc-tree-item-actions"
+        $gap="4xs"
+        tabIndex={-1}
+        $css={css`
+          & button {
+            height: 24px;
+            width: 24px;
+            padding: 0;
+            justify-content: center;
+            &:focus-visible {
+              box-shadow: 0 0 0 2px
+                var(--c--contextuals--border--semantic--brand--primary);
+            }
+          }
+        `}
+      >
+        <DropdownMenu
+          options={options}
+          isOpen={isOpen}
+          onOpenChange={onOpenChange}
+        >
+          <Button
+            ref={targetButtonRef}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onOpenChange?.(!isOpen);
+            }}
+            aria-label={t('More options')}
+            tabIndex={-1}
+            color="brand"
+            variant="tertiary"
+            size="small"
+          >
+            <Icon
+              $color="inherit"
+              icon={<MoreHorizSVG width={16} height={16} aria-hidden="true" />}
+            />
+          </Button>
+        </DropdownMenu>
+        {doc.abilities.children_create && (
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+
+              createChildDoc({
+                parentId: doc.id,
+              });
+            }}
+            aria-label={t('Add a sub page')}
+            data-testid="doc-tree-item-actions-add-child"
+            tabIndex={-1}
+            color="brand"
+            variant="tertiary"
+            size="small"
+          >
+            <Icon
+              $color="inherit"
+              icon={<AddSVG width={16} height={16} aria-hidden="true" />}
+            />
+          </Button>
+        )}
+      </Box>
+      {deleteModal.isOpen && (
+        <ModalRemoveDoc
+          onClose={deleteModal.onClose}
+          doc={doc}
+          onSuccess={onSuccessDelete}
+        />
+      )}
+    </Box>
+  );
+};

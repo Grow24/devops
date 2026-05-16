@@ -1,0 +1,109 @@
+# Copy to common (local) or set as Zeabur environment variables:
+#   cp env.d/grow24/common.example env.d/grow24/common
+
+# --- Django ---
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+DJANGO_SECRET_KEY=CHANGE_ME_DJANGO_SECRET_KEY_MIN_50_CHARS
+DJANGO_SETTINGS_MODULE=impress.settings
+DJANGO_SUPERUSER_PASSWORD=CHANGE_ME_ADMIN_PASSWORD
+DJANGO_DEBUG=False
+
+# --- Database (local Docker: grow24_postgres:5432 | Zeabur: use dashboard connection string) ---
+DATABASE_URL=postgres://grow24_user:CHANGE_ME@grow24_postgres:5432/office_suite_docs_db
+DB_HOST=grow24_postgres
+DB_PORT=5432
+DB_NAME=office_suite_docs_db
+DB_USER=grow24_user
+DB_PASSWORD=CHANGE_ME
+
+# --- Redis ---
+REDIS_URL=redis://:CHANGE_ME@grow24_redis:6379/0
+
+# --- Public URLs (LOCAL vs ZEABUR) ---
+# Local:
+#   IMPRESS_BASE_URL=http://localhost:20003
+# Zeabur (replace with your domains):
+#   IMPRESS_BASE_URL=https://your-frontend.zeabur.app
+IMPRESS_BASE_URL=http://localhost:20003
+
+CORS_ALLOW_ALL_ORIGINS=True
+
+# --- MinIO / S3 ---
+STORAGES_DEFAULT_BACKEND=impress.core.storages.MediaStorage
+AWS_S3_ENDPOINT_URL=http://minio:9000
+AWS_S3_ACCESS_KEY_ID=CHANGE_ME
+AWS_S3_SECRET_ACCESS_KEY=CHANGE_ME
+AWS_STORAGE_BUCKET_NAME=grow24-office-docs-media-storage
+AWS_S3_USE_SSL=False
+AWS_S3_CUSTOM_DOMAIN=localhost:20001
+MEDIA_BASE_URL=http://localhost:20001/media
+
+# --- OIDC / Keycloak ---
+# Browser URL (user sees this):
+OIDC_OP_AUTHORIZATION_ENDPOINT=http://localhost:28061/realms/grow24/protocol/openid-connect/auth
+# Server URLs (Zeabur: use internal service hostname or public Keycloak URL for all)
+OIDC_OP_JWKS_ENDPOINT=http://host.docker.internal:28061/realms/grow24/protocol/openid-connect/certs
+OIDC_OP_TOKEN_ENDPOINT=http://host.docker.internal:28061/realms/grow24/protocol/openid-connect/token
+OIDC_OP_USER_ENDPOINT=http://host.docker.internal:28061/realms/grow24/protocol/openid-connect/userinfo
+OIDC_OP_LOGOUT_ENDPOINT=http://host.docker.internal:28061/realms/grow24/protocol/openid-connect/logout
+
+OIDC_RP_CLIENT_ID=office_docs
+OIDC_RP_CLIENT_SECRET=CHANGE_ME_OIDC_CLIENT_SECRET
+OIDC_RP_SIGN_ALGO=RS256
+OIDC_RP_SCOPES="openid email profile"
+
+LOGIN_REDIRECT_URL=http://localhost:20003
+LOGIN_REDIRECT_URL_FAILURE=http://localhost:20003/login-error
+LOGOUT_REDIRECT_URL=http://localhost:20003
+
+OIDC_REDIRECT_ALLOWED_HOSTS=["http://localhost:20001", "http://localhost:20003", "http://localhost:28061"]
+
+# --- Collaboration ---
+COLLABORATION_API_URL=http://y-provider-production:4444/collaboration/api/
+COLLABORATION_BACKEND_BASE_URL=http://app-prod:8000/
+COLLABORATION_SERVER_ORIGIN=http://localhost:20003
+COLLABORATION_SERVER_SECRET=CHANGE_ME_COLLAB_SECRET
+COLLABORATION_WS_URL=ws://localhost:20004/collaboration/ws/
+
+Y_PROVIDER_API_BASE_URL=http://y-provider-production:4444/api/
+Y_PROVIDER_API_KEY=CHANGE_ME_Y_PROVIDER_KEY
+Y_PROVIDER_BACKEND_URL=http://app-prod:8000
+Y_PROVIDER_BACKEND_AUTH_HEADER=Bearer CHANGE_ME
+
+MINIO_BROWSER_REDIRECT_URL=http://localhost:20010
+
+# --- Security (HTTP local / HTTPS production) ---
+SECURE_SSL_REDIRECT=False
+SECURE_HSTS_SECONDS=31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS=True
+SECURE_HSTS_PRELOAD=True
+SECURE_CONTENT_TYPE_NOSNIFF=True
+SECURE_BROWSER_XSS_FILTER=True
+X_FRAME_OPTIONS=DENY
+SESSION_COOKIE_SECURE=False
+SESSION_COOKIE_HTTPONLY=True
+SESSION_COOKIE_SAMESITE=Lax
+CSRF_COOKIE_SECURE=False
+CSRF_COOKIE_HTTPONLY=True
+CSRF_COOKIE_SAMESITE=Lax
+
+# --- Mail (optional) ---
+DJANGO_EMAIL_BRAND_NAME="La Suite Numérique"
+DJANGO_EMAIL_HOST=smtp.example.com
+DJANGO_EMAIL_PORT=587
+DJANGO_EMAIL_USE_TLS=True
+DJANGO_EMAIL_HOST_USER=
+DJANGO_EMAIL_HOST_PASSWORD=
+DJANGO_DEFAULT_FROM_EMAIL="Docs <noreply@example.com>"
+
+LOGGING_LEVEL_HANDLERS_CONSOLE=INFO
+LOGGING_LEVEL_LOGGERS_ROOT=INFO
+LOGGING_LEVEL_LOGGERS_APP=INFO
+
+SESSION_COOKIE_AGE=86400
+SESSION_SAVE_EVERY_REQUEST=True
+
+STATIC_URL=/static/
+STATIC_ROOT=/data/static
+MEDIA_URL=/media/
+PYTHONPATH=/app
