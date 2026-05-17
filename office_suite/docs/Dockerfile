@@ -179,15 +179,9 @@ COPY --from=mail-builder /mail/backend/core/templates/mail /app/core/templates/m
 # The default command runs uvicorn ASGI server in dics's main module
 # WEB_CONCURRENCY: number of workers to run <=> --workers=4
 ENV WEB_CONCURRENCY=4
-CMD [\
-  "uvicorn",\
-  "--app-dir=/app",\
-  "--host=0.0.0.0",\
-  "--timeout-graceful-shutdown=300",\
-  "--limit-max-requests=20000",\
-  "--lifespan=off",\
-  "impress.asgi:application"\
-  ]
+ENV PORT=8080
+EXPOSE 8080
+CMD ["sh", "-c", "exec uvicorn --app-dir=/app --host=0.0.0.0 --port=${PORT:-8080} --timeout-graceful-shutdown=300 --limit-max-requests=20000 --lifespan=off impress.asgi:application"]
 
 # To run using gunicorn WSGI server use this instead:
 #CMD ["gunicorn", "-c", "/usr/local/etc/gunicorn/conversations.py", "impress.wsgi:application"]

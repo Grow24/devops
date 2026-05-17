@@ -1,6 +1,6 @@
-# Zeabur / monorepo root build (Root Directory = /)
-# Docs Django backend — paths relative to repository root.
-# Prefer: Root Directory = office_suite/docs and use office_suite/docs/Dockerfile instead.
+# Zeabur ONLY when Root Directory = / (repository root).
+# If Root Directory = office_suite/docs → do NOT use this file; use office_suite/docs/Dockerfile instead.
+# See ZEABUR-SETUP.md
 
 FROM python:3.13.13-alpine AS base
 
