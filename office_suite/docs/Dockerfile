@@ -168,22 +168,20 @@ COPY docker/files/usr/local/etc/gunicorn/impress.py /usr/local/etc/gunicorn/impr
 COPY docker/files/usr/local/bin/start-zeabur.sh /usr/local/bin/start-zeabur.sh
 RUN chmod +x /usr/local/bin/start-zeabur.sh
 
-# Un-privileged user running the application (Zeabur must pass build-arg or use default)
-ARG DOCKER_USER=1000
-USER ${DOCKER_USER}
-
-# Copy statics
+# Copy statics and mails as root (before dropping privileges)
 COPY --from=link-collector ${IMPRESS_STATIC_ROOT} ${IMPRESS_STATIC_ROOT}
-
-# Copy impress mails
 COPY --from=mail-builder /mail/backend/core/templates/mail /app/core/templates/mail
 
-# The default command runs uvicorn ASGI server in dics's main module
-# WEB_CONCURRENCY: number of workers to run <=> --workers=4
-# Single worker — Zeabur free/small plans OOM with 4 Django workers
+ARG DOCKER_USER=1000
+RUN chown -R ${DOCKER_USER}:${DOCKER_USER} ${IMPRESS_STATIC_ROOT} /app
+USER ${DOCKER_USER}
+
+# Zeabur / cloud: skip entrypoint passwd wrapper (can block startup with no logs)
+ENV PYTHONUNBUFFERED=1
 ENV WEB_CONCURRENCY=1
 EXPOSE 8080
-CMD ["/usr/local/bin/start-zeabur.sh"]
+ENTRYPOINT []
+CMD ["sh", "/usr/local/bin/start-zeabur.sh"]
 
 # To run using gunicorn WSGI server use this instead:
 #CMD ["gunicorn", "-c", "/usr/local/etc/gunicorn/conversations.py", "impress.wsgi:application"]

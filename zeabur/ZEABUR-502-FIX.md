@@ -29,11 +29,19 @@ SESSION_COOKIE_SECURE=True
 CSRF_COOKIE_SECURE=True
 ```
 
-## Step 3 — Networking port
+## Step 3 — Networking port (critical for STARTING / 502)
 
-1. Service **devops** → **Networking**
-2. Note the **container port** (often `8080`, or whatever `$PORT` is)
-3. It must match the log line after deploy:
+Zeabur must forward to the **same port** the app listens on (`$PORT`).
+
+| Zeabur Networking | Variable `PORT` | Result |
+|-------------------|-----------------|--------|
+| **8080** | `8080` (or unset, defaults 8080) | OK |
+| **8000** | set `PORT=8000` in Variables | OK |
+| Networking **8000**, app on **8080** | | **STARTING forever / 502** |
+
+1. Service **devops** → **Networking** → use **8080** (recommended)
+2. Or keep **8000** and add Variable: `PORT=8000`
+3. Logs must show:
 
 ```
 === GROW24 Docs backend starting on 0.0.0.0:8080 (workers=1) ===

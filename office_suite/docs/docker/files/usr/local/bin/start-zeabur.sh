@@ -1,7 +1,8 @@
 #!/bin/sh
-set -e
+# Log immediately so Zeabur runtime logs show output even if uvicorn fails later
 PORT="${PORT:-8080}"
 echo "=== GROW24 Docs backend starting on 0.0.0.0:${PORT} (workers=1) ==="
+echo "=== DJANGO_CONFIGURATION=${DJANGO_CONFIGURATION:-unset} ==="
 exec uvicorn \
   --app-dir=/app \
   --host=0.0.0.0 \

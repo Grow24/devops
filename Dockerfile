@@ -80,15 +80,19 @@ ARG IMPRESS_STATIC_ROOT=/data/static
 ARG DOCKER_USER=1000
 
 RUN mkdir -p /usr/local/etc/gunicorn
+COPY office_suite/docs/docker/files/usr/local/bin/entrypoint /usr/local/bin/entrypoint
 COPY office_suite/docs/docker/files/usr/local/etc/gunicorn/impress.py /usr/local/etc/gunicorn/impress.py
 COPY office_suite/docs/docker/files/usr/local/bin/start-zeabur.sh /usr/local/bin/start-zeabur.sh
-RUN chmod +x /usr/local/bin/start-zeabur.sh
-
-USER ${DOCKER_USER}
+RUN chmod +x /usr/local/bin/entrypoint /usr/local/bin/start-zeabur.sh
 
 COPY --from=link-collector ${IMPRESS_STATIC_ROOT} ${IMPRESS_STATIC_ROOT}
 COPY --from=mail-builder /mail/backend/core/templates/mail /app/core/templates/mail
+RUN chown -R ${DOCKER_USER}:${DOCKER_USER} ${IMPRESS_STATIC_ROOT} /app
 
+USER ${DOCKER_USER}
+
+ENV PYTHONUNBUFFERED=1
 ENV WEB_CONCURRENCY=1
 EXPOSE 8080
-CMD ["/usr/local/bin/start-zeabur.sh"]
+ENTRYPOINT []
+CMD ["sh", "/usr/local/bin/start-zeabur.sh"]
