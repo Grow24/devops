@@ -135,7 +135,7 @@ RUN --mount=from=ghcr.io/astral-sh/uv:0.11.10,source=/uv,target=/bin/uv \
   uv sync --all-extras --locked
 
 # Restore the un-privileged user running the application
-ARG DOCKER_USER
+ARG DOCKER_USER=1000
 USER ${DOCKER_USER}
 
 # Target database host (e.g. database engine following docker compose services
@@ -165,9 +165,11 @@ ARG IMPRESS_STATIC_ROOT=/data/static
 # Gunicorn - not used by default but configuration file is provided
 RUN mkdir -p /usr/local/etc/gunicorn
 COPY docker/files/usr/local/etc/gunicorn/impress.py /usr/local/etc/gunicorn/impress.py
+COPY docker/files/usr/local/bin/start-zeabur.sh /usr/local/bin/start-zeabur.sh
+RUN chmod +x /usr/local/bin/start-zeabur.sh
 
-# Un-privileged user running the application
-ARG DOCKER_USER
+# Un-privileged user running the application (Zeabur must pass build-arg or use default)
+ARG DOCKER_USER=1000
 USER ${DOCKER_USER}
 
 # Copy statics
@@ -178,10 +180,10 @@ COPY --from=mail-builder /mail/backend/core/templates/mail /app/core/templates/m
 
 # The default command runs uvicorn ASGI server in dics's main module
 # WEB_CONCURRENCY: number of workers to run <=> --workers=4
-ENV WEB_CONCURRENCY=4
-ENV PORT=8080
+# Single worker — Zeabur free/small plans OOM with 4 Django workers
+ENV WEB_CONCURRENCY=1
 EXPOSE 8080
-CMD ["sh", "-c", "exec uvicorn --app-dir=/app --host=0.0.0.0 --port=${PORT:-8080} --timeout-graceful-shutdown=300 --limit-max-requests=20000 --lifespan=off impress.asgi:application"]
+CMD ["/usr/local/bin/start-zeabur.sh"]
 
 # To run using gunicorn WSGI server use this instead:
 #CMD ["gunicorn", "-c", "/usr/local/etc/gunicorn/conversations.py", "impress.wsgi:application"]

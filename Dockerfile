@@ -81,15 +81,14 @@ ARG DOCKER_USER=1000
 
 RUN mkdir -p /usr/local/etc/gunicorn
 COPY office_suite/docs/docker/files/usr/local/etc/gunicorn/impress.py /usr/local/etc/gunicorn/impress.py
+COPY office_suite/docs/docker/files/usr/local/bin/start-zeabur.sh /usr/local/bin/start-zeabur.sh
+RUN chmod +x /usr/local/bin/start-zeabur.sh
 
 USER ${DOCKER_USER}
 
 COPY --from=link-collector ${IMPRESS_STATIC_ROOT} ${IMPRESS_STATIC_ROOT}
 COPY --from=mail-builder /mail/backend/core/templates/mail /app/core/templates/mail
 
-ENV WEB_CONCURRENCY=4
-# Zeabur injects $PORT — app must listen on it (not hard-coded 8000)
-ENV PORT=8080
+ENV WEB_CONCURRENCY=1
 EXPOSE 8080
-
-CMD ["sh", "-c", "exec uvicorn --app-dir=/app --host=0.0.0.0 --port=${PORT:-8080} --timeout-graceful-shutdown=300 --limit-max-requests=20000 --lifespan=off impress.asgi:application"]
+CMD ["/usr/local/bin/start-zeabur.sh"]
