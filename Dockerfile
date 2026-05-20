@@ -45,15 +45,24 @@ FROM core AS backend-production
 RUN rm -rf /var/cache/apk/*
 ARG IMPRESS_STATIC_ROOT=/data/static
 ARG DOCKER_USER=1000
+RUN mkdir -p /usr/local/etc/gunicorn
+COPY office_suite/docs/docker/files/usr/local/bin/entrypoint /usr/local/bin/entrypoint
+COPY office_suite/docs/docker/files/usr/local/etc/gunicorn/impress.py /usr/local/etc/gunicorn/impress.py
 COPY office_suite/docs/docker/files/usr/local/bin/start-zeabur.sh /usr/local/bin/start-zeabur.sh
-RUN chmod +x /usr/local/bin/start-zeabur.sh
+RUN chmod +x /usr/local/bin/entrypoint /usr/local/bin/start-zeabur.sh
 COPY --from=link-collector ${IMPRESS_STATIC_ROOT} ${IMPRESS_STATIC_ROOT}
 COPY --from=mail-builder /mail/backend/core/templates/mail /app/core/templates/mail
 RUN chown -R ${DOCKER_USER}:${DOCKER_USER} ${IMPRESS_STATIC_ROOT} /app
 USER ${DOCKER_USER}
-ENV PYTHONUNBUFFERED=1 WEB_CONCURRENCY=1
+ENV PYTHONUNBUFFERED=1
+ENV WEB_CONCURRENCY=4
+ENV GUNICORN_WORKERS=4
+ENV GUNICORN_THREADS=2
+ENV GUNICORN_WORKER_CLASS=gthread
+ENV GUNICORN_TIMEOUT=120
+ENV GUNICORN_KEEPALIVE=5
 EXPOSE 8080
 ENTRYPOINT []
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-  CMD wget -qO- "http://127.0.0.1:${PORT:-8080}/__heartbeat__/" || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD python -c "import requests; requests.get('http://127.0.0.1:8080/__heartbeat__/', timeout=5)" || exit 1
 CMD ["sh", "/usr/local/bin/start-zeabur.sh"]

@@ -1,14 +1,20 @@
 #!/bin/sh
-# Log immediately so Zeabur runtime logs show output even if uvicorn fails later
+# Zeabur entrypoint for production traffic.
 PORT="${PORT:-8080}"
-echo "=== GROW24 Docs backend starting on 0.0.0.0:${PORT} (workers=1) ==="
+WORKERS="${GUNICORN_WORKERS:-${WEB_CONCURRENCY:-4}}"
+THREADS="${GUNICORN_THREADS:-2}"
+WORKER_CLASS="${GUNICORN_WORKER_CLASS:-gthread}"
+TIMEOUT="${GUNICORN_TIMEOUT:-120}"
+KEEPALIVE="${GUNICORN_KEEPALIVE:-5}"
+echo "=== GROW24 Docs backend starting on 0.0.0.0:${PORT} (gunicorn workers=${WORKERS}, threads=${THREADS}) ==="
 echo "=== DJANGO_CONFIGURATION=${DJANGO_CONFIGURATION:-unset} ==="
-exec uvicorn \
-  --app-dir=/app \
-  --host=0.0.0.0 \
-  --port="${PORT}" \
-  --workers=1 \
-  --timeout-graceful-shutdown=300 \
-  --limit-max-requests=20000 \
-  --lifespan=off \
-  impress.asgi:application
+exec gunicorn \
+  --config /usr/local/etc/gunicorn/impress.py \
+  --chdir /app \
+  --bind "0.0.0.0:${PORT}" \
+  --workers "${WORKERS}" \
+  --threads "${THREADS}" \
+  --worker-class "${WORKER_CLASS}" \
+  --timeout "${TIMEOUT}" \
+  --keep-alive "${KEEPALIVE}" \
+  impress.wsgi:application

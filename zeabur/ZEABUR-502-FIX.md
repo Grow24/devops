@@ -23,6 +23,7 @@ DATABASE_URL=<paste PostgreSQL connection string>
 REDIS_URL=<paste Redis connection string>
 DJANGO_CONFIGURATION=Production
 DJANGO_SECRET_KEY=<50+ random characters>
+ALLOWED_HOSTS=devopsdev.zeabur.app
 DJANGO_ALLOWED_HOSTS=devopsdev.zeabur.app
 SECURE_SSL_REDIRECT=True
 SESSION_COOKIE_SECURE=True
@@ -68,6 +69,8 @@ If logs are **empty** or container **restarts** → missing `DATABASE_URL` / wro
 | `/__heartbeat__/` | 200 |
 | `/api/v1.0/config/` | 200 JSON |
 | `/` | 404 is fine |
+
+If all URLs return **500**, see [ZEABUR-500-FIX.md](./ZEABUR-500-FIX.md) (usually missing/wrong `REDIS_URL`).
 
 ## Step 6 — Migrate (once RUNNING)
 

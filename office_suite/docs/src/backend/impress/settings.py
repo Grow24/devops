@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 import tomllib
 from socket import gethostbyname, gethostname
+from urllib.parse import unquote, urlparse
 
 from django.utils.translation import gettext_lazy as _
 
@@ -33,6 +34,42 @@ DATA_DIR = os.getenv("DATA_DIR", os.path.join("/", "data"))
 KB = 1024
 MB = KB * KB
 GB = MB * KB
+
+
+def _hosts_from_comma_separated(value):
+    """Parse ALLOWED_HOSTS-style env values (comma or space separated)."""
+    if not value:
+        return []
+    return [h.strip() for h in value.replace(",", " ").split() if h.strip()]
+
+
+def _apply_database_url(configuration):
+    """Map Zeabur-style DATABASE_URL to Django DATABASES (optional)."""
+    url = os.environ.get("DATABASE_URL")
+    if not url:
+        return
+    parsed = urlparse(url)
+    if parsed.scheme not in ("postgres", "postgresql"):
+        return
+    configuration.DATABASES["default"].update(
+        {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": (parsed.path or "/").lstrip("/"),
+            "USER": unquote(parsed.username or ""),
+            "PASSWORD": unquote(parsed.password or ""),
+            "HOST": parsed.hostname or "",
+            "PORT": parsed.port or 5432,
+        }
+    )
+
+
+def _merge_django_allowed_hosts(configuration):
+    """Support DJANGO_ALLOWED_HOSTS used in compose/helm/Zeabur docs."""
+    extra = _hosts_from_comma_separated(os.environ.get("DJANGO_ALLOWED_HOSTS"))
+    if not extra:
+        return
+    existing = list(getattr(configuration, "ALLOWED_HOSTS", []) or [])
+    configuration.ALLOWED_HOSTS = list(dict.fromkeys([*existing, *extra]))
 
 
 def get_release():
@@ -1137,6 +1174,9 @@ class Base(Configuration):
         settings to be loaded.
         """
         super().post_setup()
+
+        _apply_database_url(cls)
+        _merge_django_allowed_hosts(cls)
 
         # The SENTRY_DSN setting should be available to activate sentry for an environment
         if cls.SENTRY_DSN is not None:

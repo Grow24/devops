@@ -161,26 +161,34 @@ FROM core AS backend-production
 RUN rm -rf /var/cache/apk/*
 
 ARG IMPRESS_STATIC_ROOT=/data/static
+ARG DOCKER_USER=1000
 
 # Gunicorn - not used by default but configuration file is provided
 RUN mkdir -p /usr/local/etc/gunicorn
+COPY docker/files/usr/local/bin/entrypoint /usr/local/bin/entrypoint
 COPY docker/files/usr/local/etc/gunicorn/impress.py /usr/local/etc/gunicorn/impress.py
 COPY docker/files/usr/local/bin/start-zeabur.sh /usr/local/bin/start-zeabur.sh
-RUN chmod +x /usr/local/bin/start-zeabur.sh
+RUN chmod +x /usr/local/bin/entrypoint /usr/local/bin/start-zeabur.sh
 
 # Copy statics and mails as root (before dropping privileges)
 COPY --from=link-collector ${IMPRESS_STATIC_ROOT} ${IMPRESS_STATIC_ROOT}
 COPY --from=mail-builder /mail/backend/core/templates/mail /app/core/templates/mail
 
-ARG DOCKER_USER=1000
 RUN chown -R ${DOCKER_USER}:${DOCKER_USER} ${IMPRESS_STATIC_ROOT} /app
 USER ${DOCKER_USER}
 
 # Zeabur / cloud: skip entrypoint passwd wrapper (can block startup with no logs)
 ENV PYTHONUNBUFFERED=1
-ENV WEB_CONCURRENCY=1
+ENV WEB_CONCURRENCY=4
+ENV GUNICORN_WORKERS=4
+ENV GUNICORN_THREADS=2
+ENV GUNICORN_WORKER_CLASS=gthread
+ENV GUNICORN_TIMEOUT=120
+ENV GUNICORN_KEEPALIVE=5
 EXPOSE 8080
 ENTRYPOINT []
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import requests; requests.get('http://127.0.0.1:8080/__heartbeat__/', timeout=5)" || exit 1
 CMD ["sh", "/usr/local/bin/start-zeabur.sh"]
 
 # To run using gunicorn WSGI server use this instead:
