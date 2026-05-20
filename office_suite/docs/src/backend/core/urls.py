@@ -9,6 +9,7 @@ from rest_framework.routers import DefaultRouter
 
 from core.api import viewsets
 from core.external_api import viewsets as external_api_viewsets
+from core import views
 
 # - Main endpoints
 router = DefaultRouter()
@@ -60,6 +61,7 @@ external_api_router.register(
 
 
 urlpatterns = [
+    path("", views.home, name="home"),
     path(
         f"api/{settings.API_VERSION}/",
         include(
