@@ -43,11 +43,23 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Prefer Docker Compose v2 (docker compose); v1 breaks on Docker Engine 28+ (ContainerConfig).
+compose_up() {
+    local compose_file="$1"
+    if docker compose version >/dev/null 2>&1; then
+        docker compose -f "$compose_file" up -d
+    elif command_exists docker-compose; then
+        docker-compose -f "$compose_file" up -d
+    else
+        error_exit "Docker Compose is not installed (need 'docker compose' or docker-compose)."
+    fi
+}
+
 # Check if Docker and Docker Compose are installed
 if ! command_exists docker; then
     error_exit "Docker is not installed. Please install Docker and try again."
 fi
-if ! command_exists docker-compose; then
+if ! docker compose version >/dev/null 2>&1 && ! command_exists docker-compose; then
     error_exit "Docker Compose is not installed. Please install Docker Compose and try again."
 fi
 
@@ -88,7 +100,7 @@ fi
 
 # Start PostgreSQL service
 echo -e "${YELLOW}Starting PostgreSQL service...${NC}"
-docker-compose -f "$POSTGRES_COMPOSE_FILE" up -d || error_exit "Failed to start PostgreSQL service."
+compose_up "$POSTGRES_COMPOSE_FILE" || error_exit "Failed to start PostgreSQL service."
 
 # Wait for PostgreSQL to be healthy
 echo -e "${YELLOW}Waiting for PostgreSQL to be healthy...${NC}"
@@ -103,7 +115,7 @@ echo -e "${GREEN}PostgreSQL service is healthy and running on port $(grep POSTGR
 
 # Start Redis service
 echo -e "${YELLOW}Starting Redis service...${NC}"
-docker-compose -f "$REDIS_COMPOSE_FILE" up -d || error_exit "Failed to start Redis service."
+compose_up "$REDIS_COMPOSE_FILE" || error_exit "Failed to start Redis service."
 
 # Wait for Redis to be healthy
 echo -e "${YELLOW}Waiting for Redis to be healthy...${NC}"

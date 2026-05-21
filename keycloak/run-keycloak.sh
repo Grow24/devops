@@ -32,6 +32,24 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Prefer Docker Compose v2 (docker compose); v1 breaks on Docker Engine 28+ (ContainerConfig).
+compose_up() {
+    local compose_file="$1"
+    if docker compose version >/dev/null 2>&1; then
+        docker compose -f "$compose_file" up -d
+    elif command_exists docker-compose; then
+        docker-compose -f "$compose_file" up -d
+    else
+        error_exit "Docker Compose is not installed (need 'docker compose' or docker-compose)."
+    fi
+}
+
+# Remove stale containers left by old docker-compose recreate bugs.
+cleanup_stale_keycloak() {
+    docker rm -f grow24_keycloak 2>/dev/null || true
+    docker ps -a --filter "name=grow24_keycloak" --format '{{.ID}}' | xargs -r docker rm -f 2>/dev/null || true
+}
+
 # Function to generate a local self-signed certificate for non-cPanel environments
 generate_self_signed_cert() {
     local cert_file="$1"
@@ -104,7 +122,7 @@ set +a
 if ! command_exists docker; then
     error_exit "Docker is not installed. Please install Docker and try again."
 fi
-if ! command_exists docker-compose; then
+if ! docker compose version >/dev/null 2>&1 && ! command_exists docker-compose; then
     error_exit "Docker Compose is not installed. Please install Docker Compose and try again."
 fi
 if ! command_exists openssl; then
@@ -156,7 +174,8 @@ echo -e "${GREEN}Directories ready.${NC}"
 
 # Start Keycloak
 echo -e "${YELLOW}Starting Keycloak service...${NC}"
-docker-compose -f "$KEYCLOAK_COMPOSE_FILE" up -d || error_exit "Failed to start Keycloak service."
+cleanup_stale_keycloak
+compose_up "$KEYCLOAK_COMPOSE_FILE" || error_exit "Failed to start Keycloak service."
 
 # Wait for Keycloak to become healthy
 echo -e "${YELLOW}Waiting for Keycloak to become healthy...${NC}"

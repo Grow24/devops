@@ -251,7 +251,7 @@ services:
     env_file:
       - env.d/grow24/common
     ports:
-      - "20001:8000"
+      - "20001:8080"
     volumes:
       - ./data/static:/data/static
       - ./src/backend/impress/settings.py:/app/impress/settings.py:ro
@@ -266,7 +266,7 @@ services:
       - suite_net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/__heartbeat__/"]
       interval: 30s
       timeout: 10s
       retries: 3
