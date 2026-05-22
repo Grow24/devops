@@ -1382,6 +1382,17 @@ class Production(Base):
         environ_name="SESSION_COOKIE_SECURE",
         environ_prefix=None,
     )
+    # Frontend and API on different Zeabur subdomains (e.g. devopsdocs / devopsdev)
+    SESSION_COOKIE_SAMESITE = values.Value(
+        "None",
+        environ_name="SESSION_COOKIE_SAMESITE",
+        environ_prefix=None,
+    )
+    CSRF_COOKIE_SAMESITE = values.Value(
+        "None",
+        environ_name="CSRF_COOKIE_SAMESITE",
+        environ_prefix=None,
+    )
     SESSION_CACHE_ALIAS = "session"
 
     # Privacy

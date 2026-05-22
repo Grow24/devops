@@ -1,5 +1,8 @@
 # Gunicorn-django settings
-bind = ["0.0.0.0:8000"]
+import os
+
+port = os.environ.get("PORT", "8080")
+bind = [f"0.0.0.0:{port}"]
 name = "impress"
 python_path = "/app"
 
