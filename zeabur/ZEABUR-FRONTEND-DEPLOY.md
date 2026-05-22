@@ -60,7 +60,26 @@ No trailing slash on `API_ORIGIN`.
 
 - **Startup Command (ENTRYPOINT):** empty
 - **Arguments (CMD):** empty
-- **Dockerfile** override box (if it shows `FROM node:18-alpine`): **delete all** → Save
+- **Dockerfile** override box (if it shows `FROM python` or `gunicorn`): **delete all** → Save
+
+### CRITICAL — `gunicorn: executable file not found` on docs-frontend
+
+This service is **nginx + static Next.js**, not Django. Do **not** install gunicorn or use the backend Dockerfile here.
+
+| Wrong (causes crash loop) | Correct |
+|---------------------------|---------|
+| Startup Command = `gunicorn` | Startup Command = **empty** |
+| Dockerfile override with `FROM python` + `CMD gunicorn` | Dockerfile override = **empty** |
+| Variable `DJANGO_CONFIGURATION` on frontend | **Remove** (unlink backend env if Zeabur copied it) |
+| Zeabur AI “add gunicorn to Dockerfile” | **Ignore** for docs-frontend |
+
+After save, logs should show **nginx**, not `exec: gunicorn`.
+
+**Variable** tab — keep only frontend vars, delete backend-only keys if present:
+
+- Remove: `DJANGO_CONFIGURATION`, `DJANGO_SECRET_KEY`, `DATABASE_URL`, `DB_*`, `OIDC_*` (backend only)
+- Keep: `ZBPACK_DOCKERFILE_PATH`, `API_ORIGIN`, `DOCKER_USER`, `PUBLISH_AS_MIT`, `SW_DEACTIVATED`
+- **Typo fix:** `PUBLISH_AS_NIT` → delete; use **`PUBLISH_AS_MIT`** = `false`
 
 ---
 

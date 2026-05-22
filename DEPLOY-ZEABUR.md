@@ -1,7 +1,8 @@
 # Zeabur par deploy — step by step
 
+> **Pehle ye padho (aapke screenshots + missing services):** [zeabur/ZEABUR-COMPLETE-GUIDE.md](./zeabur/ZEABUR-COMPLETE-GUIDE.md)  
 > **Error: "No Dockerfile found"?** → [ZEABUR-QUICKFIX.md](./ZEABUR-QUICKFIX.md)  
-> Root Directory = `office_suite/docs` ( `/` mat rakho ). Dockerfile override box khali karo.
+> Dockerfile override box **har service par khali** rakho.
 
 Ye stack **6+ services** use karta hai. Zeabur par sab kuch ek saath Docker Compose ki tarah nahi chalta — har service alag add karni hoti hai.
 

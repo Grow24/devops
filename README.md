@@ -101,4 +101,8 @@ git push
 
 ---
 
-Zeabur deploy: **[DEPLOY-ZEABUR.md](./DEPLOY-ZEABUR.md)** (Hindi + English steps)
+Zeabur deploy:
+
+- **[zeabur/ZEABUR-COMPLETE-GUIDE.md](./zeabur/ZEABUR-COMPLETE-GUIDE.md)** — screenshot audit + saari services (start here)
+- **[DEPLOY-ZEABUR.md](./DEPLOY-ZEABUR.md)** — architecture overview
+- Env templates: `zeabur/env/*.env.example`
